@@ -12,11 +12,13 @@ use Drupal\user\UserDataInterface;
 use Drupal\user\Entity\User;
 
 /**
+ * TOTP setup class to setup TOTP validation.
+ *
  * @TfaSetup(
  *   id = "tfa_totp_setup",
  *   label = @Translation("TFA Totp Setup"),
  *   description = @Translation("TFA Totp Setup Plugin"),
- *   help_links = {
+ *   helpLinks = {
  *    "Google Authenticator (Android/iPhone/BlackBerry)" = "https://support.google.com/accounts/answer/1066447?hl=en",
  *    "Authy (Android/iPhone)" = "https://www.authy.com/thefuture#install-now",
  *    "FreeOTP (Android)" = "https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp",
@@ -24,19 +26,24 @@ use Drupal\user\Entity\User;
  *   }
  * )
  */
-class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
+class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
+
   /**
-   * @var string Un-encrypted seed.
+   * Un-encrypted seed.
+   *
+   * @var string
    */
   protected $seed;
 
   /**
+   * Name prefix.
+   *
    * @var string
    */
   protected $namePrefix;
 
   /**
-   * @copydoc TfaBasePlugin::__construct()
+   * {@inheritdoc}
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data);
@@ -46,15 +53,20 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   }
 
   /**
-   * @copydoc TfaSetupPluginInterface::getSetupForm()
+   * {@inheritdoc}
    */
   public function getSetupForm(array $form, FormStateInterface $form_state) {
     $help_links = $this->getHelpLinks();
 
-    foreach($help_links as $item => $link)
-      $items[] = Link::fromTextAndUrl($item, Url::fromUri($link, ['attributes' => ['target'=>'_blank']]));
+    foreach ($help_links as $item => $link) {
+      $items[] = Link::fromTextAndUrl($item, Url::fromUri($link, ['attributes' => ['target' => '_blank']]));
+    }
 
-    $markup = ['#theme' => 'item_list', '#items' => $items, '#title' => t('Install authentication code application on your mobile or desktop device:')];
+    $markup = [
+      '#theme' => 'item_list',
+      '#items' => $items,
+      '#title' => t('Install authentication code application on your mobile or desktop device:'),
+    ];
     $form['apps'] = array(
       '#type' => 'markup',
       '#markup' => \Drupal::service('renderer')->render($markup),
@@ -85,7 +97,7 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
     }
     else {
       $form['qr_image'] = array(
-        '#markup' => '<img src="' . $this->getQrCodeUrl($this->seed) .'" alt="QR code for TFA setup">',
+        '#markup' => '<img src="' . $this->getQrCodeUrl($this->seed) . '" alt="QR code for TFA setup">',
       );
     }
     // Include code entry form.
@@ -97,26 +109,26 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   }
 
   /**
-   * @copydoc TfaSetupPluginInterface::validateSetupForm()
+   * {@inheritdoc}
    */
   public function validateSetupForm(array $form, FormStateInterface $form_state) {
     if (!$this->validate($form_state->getValue('code'))) {
       $this->errorMessages['code'] = t('Invalid application code. Please try again.');
-//      $form_state->setErrorByName('code', $this->errorMessages['code']);
+      // $form_state->setErrorByName('code', $this->errorMessages['code']);.
       return FALSE;
     }
     return TRUE;
   }
 
   /**
-   * @copydoc TfaBasePlugin::validate()
+   * {@inheritdoc}
    */
   protected function validate($code) {
     return $this->auth->otp->checkTotp(Base32::decode($this->seed), $code, $this->timeSkew);
   }
 
   /**
-   * @copydoc TfaSetupPluginInterface::submitSetupForm()
+   * {@inheritdoc}
    */
   public function submitSetupForm(array $form, FormStateInterface $form_state) {
     // Write seed for user.
@@ -128,7 +140,10 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
    * Get a URL to a Google Chart QR image for a seed.
    *
    * @param string $seed
-   * @return string URL
+   *   Un-encrypted seed.
+   *
+   * @return string
+   *   QR-code url.
    */
   protected function getQrCodeUrl($seed) {
     // Note, this URL is over https but does leak the seed and account
@@ -140,7 +155,8 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   /**
    * Create OTP seed for account.
    *
-   * @return string Seed.
+   * @return string
+   *   Un-encrypted seed.
    */
   protected function createSeed() {
     return $this->auth->ga->generateRandom();
@@ -149,16 +165,19 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   /**
    * Save seed for account.
    *
-   * @param string $seed Seed.
+   * @param string $seed
+   *   Un-encrypted seed.
    */
   protected function storeSeed($seed) {
     // Encrypt seed for storage.
     $encrypted = $this->encrypt($seed);
 
-    $record = ['tfa_totp_seed' => [
-                'seed' => Base32::encode($encrypted),
-                'created' => REQUEST_TIME]
-              ];
+    $record = [
+      'tfa_totp_seed' => [
+        'seed' => Base32::encode($encrypted),
+        'created' => REQUEST_TIME,
+      ],
+    ];
 
     $this->setUserData('tfa', $record);
   }
@@ -166,21 +185,23 @@ class TfaTotpSetup extends TfaTotp implements TfaSetupInterface {
   /**
    * Get account name for QR image.
    *
-   * @return string URL encoded string.
+   * @return string
+   *   URL encoded string.
    */
   protected function accountName() {
     /** @var User $account */
-    $account =  User::load($this->configuration['uid']);
+    $account = User::load($this->configuration['uid']);
     return urlencode($this->namePrefix . '-' . $account->getUsername());
   }
 
   /**
-   * Get list of helper links for the plugin
+   * Get list of helper links for the plugin.
    *
-   * @return array List of helper links
+   * @return array
+   *   List of helper links
    */
-  public function getHelpLinks(){
-    return $this->pluginDefinition['help_links'];
+  public function getHelpLinks() {
+    return $this->pluginDefinition['helpLinks'];
   }
 
 }
