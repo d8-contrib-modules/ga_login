@@ -27,7 +27,6 @@ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
  * )
  */
 class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
-  use DependencySerializationTrait;
 
   /**
    * Un-encrypted seed.
@@ -49,7 +48,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data);
     // Generate seed.
-    $this->seed = $this->createSeed();
+    $this->setSeed($this->createSeed());
     $this->namePrefix = \Drupal::config('tfa.settings')->get('name_prefix');
   }
 
@@ -168,23 +167,13 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   }
 
   /**
-   * Save seed for account.
+   * Setter for OTP secret key.
    *
    * @param string $seed
-   *   Un-encrypted seed.
+   *   The OTP secret key.
    */
-  protected function storeSeed($seed) {
-    // Encrypt seed for storage.
-    $encrypted = $this->encrypt($seed);
-
-    $record = [
-      'tfa_hotp_seed' => [
-        'seed' => Base32::encode($encrypted),
-        'created' => REQUEST_TIME,
-      ],
-    ];
-
-    $this->setUserData('tfa', $record);
+  public function setSeed($seed) {
+    $this->seed = $seed;
   }
 
   /**
