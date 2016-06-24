@@ -82,7 +82,8 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
       '#description' => t('Enter this code into your two-factor authentication app or scan the QR code below.'),
     );
     // QR image of seed.
-    if (file_exists(drupal_get_path('module', 'tfa_basic') . '/includes/qrcodejs/qrcode.min.js')) {
+    // @todo This needs to be fixed. Doesn't work right now.
+    if (file_exists(drupal_get_path('module', 'tfa') . '/includes/qrcodejs/qrcode.min.js')) {
       $form['qr_image_wrapper']['qr_image'] = array(
         '#markup' => '<div id="tfa-qrcode"></div>',
       );
