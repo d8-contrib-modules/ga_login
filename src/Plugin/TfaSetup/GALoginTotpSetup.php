@@ -118,6 +118,7 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
       // $form_state->setErrorByName('code', $this->errorMessages['code']);.
       return FALSE;
     }
+    $this->storeAcceptedCode($form_state->getValue('code'));
     return TRUE;
   }
 
