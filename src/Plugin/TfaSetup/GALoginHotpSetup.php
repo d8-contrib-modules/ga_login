@@ -119,6 +119,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
       // $form_state->setErrorByName('code', $this->errorMessages['code']);.
       return FALSE;
     }
+    $this->storeAcceptedCode($form_state->getValue('code'));
     return TRUE;
   }
 
@@ -126,8 +127,9 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
    * {@inheritdoc}
    */
   protected function validate($code) {
-    $counter = $this->getHotpCounter();
-    $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), $counter, $code);
+    // The counter is set as 1 because that is the initial value.
+    // This ensures that things work even if we reset the application.
+    $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), 1, $code);
     $this->setUserData('tfa', ['tfa_hotp_counter' => ++$counter], $this->uid, $this->userData);
     return ((bool) $counter);
   }
@@ -154,7 +156,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
     // Note, this URL is over https but does leak the seed and account
     // email address to Google. See README.txt for local QR code generation
     // using qrcode.js.
-    return $this->auth->ga->getQrCodeUrl('hotp', $this->accountName(), $seed, $this->getHotpCounter());
+    return $this->auth->ga->getQrCodeUrl('hotp', $this->accountName(), $seed, 1);
   }
 
   /**
