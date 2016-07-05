@@ -186,10 +186,7 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
   }
 
   /**
-   * Get list of helper links for the plugin.
-   *
-   * @return array
-   *   List of helper links
+   * {@inheritdoc}
    */
   public function getHelpLinks() {
     return $this->pluginDefinition['helpLinks'];

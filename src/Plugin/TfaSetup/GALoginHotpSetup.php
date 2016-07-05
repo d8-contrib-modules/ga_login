@@ -127,7 +127,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
    */
   protected function validate($code) {
     $counter = $this->getHotpCounter();
-    $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), ++$counter, $code);
+    $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), $counter, $code);
     $this->setUserData('tfa', ['tfa_hotp_counter' => ++$counter], $this->uid, $this->userData);
     return ((bool) $counter);
   }
@@ -190,10 +190,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   }
 
   /**
-   * Get list of helper links for the plugin.
-   *
-   * @return array
-   *   List of helper links
+   * {@inheritdoc}
    */
   public function getHelpLinks() {
     return $this->pluginDefinition['helpLinks'];

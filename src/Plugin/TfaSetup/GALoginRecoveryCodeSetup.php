@@ -106,10 +106,7 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
   }
 
   /**
-   * Get list of helper links for the plugin.
-   *
-   * @return array
-   *   List of helper links
+   * {@inheritdoc}
    */
   public function getHelpLinks() {
     return $this->pluginDefinition['helpLinks'];
