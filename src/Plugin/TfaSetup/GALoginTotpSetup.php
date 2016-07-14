@@ -4,6 +4,8 @@ namespace Drupal\ga_login\Plugin\TfaSetup;
 
 use Base32\Base32;
 use Drupal\Core\Link;
+use Drupal\encrypt\EncryptionProfileManagerInterface;
+use Drupal\encrypt\EncryptServiceInterface;
 use Drupal\tfa\Plugin\TfaSetupInterface;
 use Drupal\tfa\Plugin\TfaValidation\TfaTotp;
 use Drupal\Core\Url;
@@ -45,8 +47,8 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data, EncryptionProfileManagerInterface $encryption_profile_manager, EncryptServiceInterface $encrypt_service) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data, $encryption_profile_manager, $encrypt_service);
     // Generate seed.
     $this->setSeed($this->createSeed());
     $this->namePrefix = \Drupal::config('tfa.settings')->get('name_prefix');

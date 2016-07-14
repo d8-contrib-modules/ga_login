@@ -2,6 +2,8 @@
 
 namespace Drupal\ga_login\Plugin\TfaSetup;
 
+use Drupal\encrypt\EncryptionProfileManagerInterface;
+use Drupal\encrypt\EncryptServiceInterface;
 use Drupal\tfa\Plugin\TfaSetupInterface;
 use Drupal\tfa\Plugin\TfaValidation\TfaRecoveryCode;
 use Drupal\Core\Form\FormStateInterface;
@@ -35,8 +37,8 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data, EncryptionProfileManagerInterface $encryption_profile_manager, EncryptServiceInterface $encrypt_service) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data, $encryption_profile_manager, $encrypt_service);
     $this->codeLimit = \Drupal::config('tfa.settings')->get('recovery_codes_amount');
   }
 
