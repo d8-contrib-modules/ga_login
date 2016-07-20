@@ -195,4 +195,35 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
     return $this->pluginDefinition['helpLinks'];
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getOverview($params) {
+    $output = array(
+      'heading' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => t('TFA application'),
+      ),
+      'description' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => t('Generate verification codes from a mobile or desktop application.'),
+      ),
+      'link' => array(
+        '#theme' => 'links',
+        '#links' => array(
+          'admin' => array(
+            'title' => !$params['enabled'] ? t('Set up application') : t('Reset application'),
+            'url' => Url::fromRoute('tfa.validation.setup', [
+              'user' => $params['account']->id(),
+              'method' => $params['plugin_id'],
+            ]),
+          ),
+        ),
+      ),
+    );
+    return $output;
+  }
+
 }
