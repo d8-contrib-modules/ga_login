@@ -46,9 +46,9 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
   /**
    * {@inheritdoc}
    */
-  public function getSetupForm(array $form, FormStateInterface $form_state) {
+  public function getSetupForm(array $form, FormStateInterface $form_state, $reset = 0) {
 
-    if ($codes = $this->getCodes()) {
+    if ($codes = $this->getCodes() && !$reset) {
       $this->codes = $codes;
     }
     else {
@@ -141,6 +141,20 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
             'url' => Url::fromRoute('tfa.validation.setup', [
               'user' => $params['account']->id(),
               'method' => $params['plugin_id'],
+            ]),
+          ],
+        ],
+      ];
+
+      $output['reset'] = [
+        '#theme' => 'links',
+        '#links' => [
+          'admin' => [
+            'title' => t('Reset Codes'),
+            'url' => Url::fromRoute('tfa.plugin.reset', [
+              'user' => $params['account']->id(),
+              'method' => $params['plugin_id'],
+              'reset' => 1,
             ]),
           ],
         ],
