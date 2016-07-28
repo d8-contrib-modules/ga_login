@@ -203,12 +203,21 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
    * {@inheritdoc}
    */
   public function getOverview($params) {
+    $plugin_text = t('Validation Plugin: @plugin',
+      [
+        '@plugin' => str_replace(' Setup', '', $this->getLabel()),
+      ]
+    );
     $output = array(
       'heading' => array(
         '#type' => 'html_tag',
         '#tag' => 'h2',
         '#value' => t('TFA application'),
       ),
+      'validation_plugin' => [
+        '#type' => 'markup',
+        '#markup' => '<p>' . $plugin_text . '</p>',
+      ],
       'description' => array(
         '#type' => 'html_tag',
         '#tag' => 'p',
