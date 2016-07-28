@@ -31,7 +31,7 @@ class GALoginTotpSetupTest extends WebTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['tfa', 'ga_login'];
+  public static $modules = ['tfa', 'ga_login', 'encrypt', 'key'];
 
   /**
    * {@inheritdoc}

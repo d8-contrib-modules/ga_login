@@ -2,11 +2,12 @@
 
 namespace Drupal\ga_login\Plugin\TfaSetup;
 
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\encrypt\EncryptionProfileManagerInterface;
 use Drupal\encrypt\EncryptServiceInterface;
 use Drupal\tfa\Plugin\TfaSetupInterface;
 use Drupal\tfa\Plugin\TfaValidation\TfaRecoveryCode;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\user\UserDataInterface;
 
 /**
@@ -112,6 +113,47 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
    */
   public function getHelpLinks() {
     return $this->pluginDefinition['helpLinks'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOverview($params) {
+    $output = array(
+      'heading' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => t('Fallback: Recovery Codes'),
+      ),
+      'description' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => t('Generate recovery codes to login when you can not do TFA.'),
+      ),
+    );
+
+    if ($params['enabled']) {
+      $output['link'] = [
+        '#theme' => 'links',
+        '#links' => [
+          'admin' => [
+            'title' => t('Show Codes'),
+            'url' => Url::fromRoute('tfa.validation.setup', [
+              'user' => $params['account']->id(),
+              'method' => $params['plugin_id'],
+            ]),
+          ],
+        ],
+      ];
+    }
+    else {
+      $output['disabled'] = [
+        '#type' => 'markup',
+        '#markup' => '<b>You have not setup a TFA OTP method yet.</b>',
+      ];
+    }
+
+    return $output;
   }
 
 }

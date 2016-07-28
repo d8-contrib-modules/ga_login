@@ -3,16 +3,15 @@
 namespace Drupal\ga_login\Plugin\TfaSetup;
 
 use Base32\Base32;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\encrypt\EncryptionProfileManagerInterface;
 use Drupal\encrypt\EncryptServiceInterface;
 use Drupal\tfa\Plugin\TfaSetupInterface;
 use Drupal\tfa\Plugin\TfaValidation\TfaHotp;
-use Drupal\Core\Url;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\user\UserDataInterface;
 use Drupal\user\Entity\User;
-use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\user\UserDataInterface;
 
 /**
  * HOTP setup class to setup HOTP validation.
@@ -198,6 +197,37 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
    */
   public function getHelpLinks() {
     return $this->pluginDefinition['helpLinks'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getOverview($params) {
+    $output = array(
+      'heading' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => t('TFA application'),
+      ),
+      'description' => array(
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => t('Generate verification codes from a mobile or desktop application.'),
+      ),
+      'link' => array(
+        '#theme' => 'links',
+        '#links' => array(
+          'admin' => array(
+            'title' => !$params['enabled'] ? t('Set up application') : t('Reset application'),
+            'url' => Url::fromRoute('tfa.validation.setup', [
+              'user' => $params['account']->id(),
+              'method' => $params['plugin_id'],
+            ]),
+          ),
+        ),
+      ),
+    );
+    return $output;
   }
 
 }
