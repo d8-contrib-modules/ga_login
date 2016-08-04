@@ -24,6 +24,10 @@ use Drupal\user\UserDataInterface;
  *    "Google Authenticator (Android/iPhone/BlackBerry)" = "https://support.google.com/accounts/answer/1066447?hl=en",
  *    "FreeOTP (Android)" = "https://play.google.com/store/apps/details?id=org.fedorahosted.freeotp",
  *    "GAuth Authenticator (desktop)" = "https://github.com/gbraad/html5-google-authenticator"
+ *   },
+ *   setupMessages = {
+ *    "saved" = @Translation("Application code verified."),
+ *    "skipped" = @Translation("Application codes not enabled.")
  *   }
  * )
  */
@@ -69,39 +73,39 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
       '#items' => $items,
       '#title' => t('Install authentication code application on your mobile or desktop device:'),
     ];
-    $form['apps'] = array(
+    $form['apps'] = [
       '#type' => 'markup',
       '#markup' => \Drupal::service('renderer')->render($markup),
-    );
-    $form['info'] = array(
+    ];
+    $form['info'] = [
       '#type' => 'markup',
       '#markup' => t('<p>The two-factor authentication application will be used during this setup and for generating codes during regular authentication. If the application supports it, scan the QR code below to get the setup code otherwise you can manually enter the text code.</p>'),
-    );
-    $form['seed'] = array(
+    ];
+    $form['seed'] = [
       '#type' => 'textfield',
       '#value' => $this->seed,
       '#disabled' => TRUE,
       '#description' => t('Enter this code into your two-factor authentication app or scan the QR code below.'),
-    );
+    ];
     // QR image of seed.
     // @todo This needs to be fixed. Doesn't work right now.
     if (file_exists(drupal_get_path('module', 'tfa') . '/includes/qrcodejs/qrcode.min.js')) {
-      $form['qr_image_wrapper']['qr_image'] = array(
+      $form['qr_image_wrapper']['qr_image'] = [
         '#markup' => '<div id="tfa-qrcode"></div>',
-      );
+      ];
       $qrdata = 'otpauth://hotp/' . $this->accountName() . '?secret=' . $this->seed;
-      $form['qr_image_wrapper']['qr_image']['#attached']['library'][] = array('tfa_basic', 'qrcodejs');
-      $form['qr_image_wrapper']['qr_image']['#attached']['js'][] = array(
+      $form['qr_image_wrapper']['qr_image']['#attached']['library'][] = ['tfa_basic', 'qrcodejs'];
+      $form['qr_image_wrapper']['qr_image']['#attached']['js'][] = [
         'data' => 'jQuery(document).ready(function () { new QRCode(document.getElementById("tfa-qrcode"), "' . $qrdata . '");});',
         'type' => 'inline',
         'scope' => 'footer',
         'weight' => 5,
-      );
+      ];
     }
     else {
-      $form['qr_image'] = array(
+      $form['qr_image'] = [
         '#markup' => '<img src="' . $this->getQrCodeUrl($this->seed) . '" alt="QR code for TFA setup">',
-      );
+      ];
     }
     // Include code entry form.
     $form = $this->getForm($form, $form_state);
@@ -130,6 +134,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   protected function validate($code) {
     // The counter is set as 1 because that is the initial value.
     // This ensures that things work even if we reset the application.
+    $code = preg_replace('/\s+/', '', $code);
     $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), 1, $code);
     $this->setUserData('tfa', ['tfa_hotp_counter' => ++$counter], $this->uid, $this->userData);
     return ((bool) $counter);
@@ -156,7 +161,8 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   protected function getQrCodeUrl($seed) {
     // Note, this URL is over https but does leak the seed and account
     // email address to Google. See README.txt for local QR code generation
-    // using qrcode.js.
+    // using qrcode.js @todo This currently does not work.
+    // The 4th parameter is the hotp counter.
     return $this->auth->ga->getQrCodeUrl('hotp', $this->accountName(), $seed, 1);
   }
 
@@ -195,6 +201,46 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   /**
    * {@inheritdoc}
    */
+  public function getOverview($params) {
+    $plugin_text = t('Validation Plugin: @plugin',
+      [
+        '@plugin' => str_replace(' Setup', '', $this->getLabel()),
+      ]
+    );
+    $output = [
+      'heading' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => t('TFA application'),
+      ],
+      'validation_plugin' => [
+        '#type' => 'markup',
+        '#markup' => '<p>' . $plugin_text . '</p>',
+      ],
+      'description' => [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => t('Generate verification codes from a mobile or desktop application.'),
+      ],
+      'link' => [
+        '#theme' => 'links',
+        '#links' => [
+          'admin' => [
+            'title' => !$params['enabled'] ? t('Set up application') : t('Reset application'),
+            'url' => Url::fromRoute('tfa.validation.setup', [
+              'user' => $params['account']->id(),
+              'method' => $params['plugin_id'],
+            ]),
+          ],
+        ],
+      ],
+    ];
+    return $output;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getHelpLinks() {
     return $this->pluginDefinition['helpLinks'];
   }
@@ -202,41 +248,8 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   /**
    * {@inheritdoc}
    */
-  public function getOverview($params) {
-    $plugin_text = t('Validation Plugin: @plugin',
-      [
-        '@plugin' => str_replace(' Setup', '', $this->getLabel()),
-      ]
-    );
-    $output = array(
-      'heading' => array(
-        '#type' => 'html_tag',
-        '#tag' => 'h2',
-        '#value' => t('TFA application'),
-      ),
-      'validation_plugin' => [
-        '#type' => 'markup',
-        '#markup' => '<p>' . $plugin_text . '</p>',
-      ],
-      'description' => array(
-        '#type' => 'html_tag',
-        '#tag' => 'p',
-        '#value' => t('Generate verification codes from a mobile or desktop application.'),
-      ),
-      'link' => array(
-        '#theme' => 'links',
-        '#links' => array(
-          'admin' => array(
-            'title' => !$params['enabled'] ? t('Set up application') : t('Reset application'),
-            'url' => Url::fromRoute('tfa.validation.setup', [
-              'user' => $params['account']->id(),
-              'method' => $params['plugin_id'],
-            ]),
-          ),
-        ),
-      ),
-    );
-    return $output;
+  public function getSetupMessages() {
+    return ($this->pluginDefinition['setupMessages']) ?: '';
   }
 
 }

@@ -16,7 +16,11 @@ use Drupal\user\UserDataInterface;
  * @TfaSetup(
  *   id = "tfa_recovery_code_setup",
  *   label = @Translation("TFA Recovery Code Setup"),
- *   description = @Translation("TFA Recovery Code Setup Plugin")
+ *   description = @Translation("TFA Recovery Code Setup Plugin"),
+ *   setupMessages = {
+ *    "saved" = @Translation("Saved recovery codes."),
+ *    "skipped" = @Translation("Recovery codes not saved.")
+ *   }
  * )
  */
 class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterface {
@@ -55,22 +59,22 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
       $this->codes = $this->generateCodes();
     }
 
-    $form['codes'] = array(
+    $form['codes'] = [
       '#title' => t('Your recovery codes'),
       '#theme' => 'item_list',
       '#items' => $this->codes,
-      '#attributes' => array('class' => array('recovery-codes')),
-    );
+      '#attributes' => ['class' => ['recovery-codes']],
+    ];
 
-    $form['info'] = array(
+    $form['info'] = [
       '#type' => 'markup',
       '#markup' => t('<p><em>Print, save, or write down these codes for use in case you are without your otp application and need to log in.</em></p>'),
-    );
+    ];
 
-    $form['actions']['save'] = array(
+    $form['actions']['save'] = [
       '#type' => 'submit',
       '#value' => t('Save'),
-    );
+    ];
 
     return $form;
   }
@@ -111,26 +115,19 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
   /**
    * {@inheritdoc}
    */
-  public function getHelpLinks() {
-    return $this->pluginDefinition['helpLinks'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getOverview($params) {
-    $output = array(
-      'heading' => array(
+    $output = [
+      'heading' => [
         '#type' => 'html_tag',
         '#tag' => 'h2',
         '#value' => t('Fallback: Recovery Codes'),
-      ),
-      'description' => array(
+      ],
+      'description' => [
         '#type' => 'html_tag',
         '#tag' => 'p',
         '#value' => t('Generate recovery codes to login when you can not do TFA.'),
-      ),
-    );
+      ],
+    ];
 
     if ($params['enabled']) {
       $output['link'] = [
@@ -168,6 +165,20 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
     }
 
     return $output;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getHelpLinks() {
+    return $this->pluginDefinition['helpLinks'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSetupMessages() {
+    return ($this->pluginDefinition['setupMessages']) ?: '';
   }
 
 }
