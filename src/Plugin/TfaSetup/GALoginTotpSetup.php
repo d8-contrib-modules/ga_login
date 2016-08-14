@@ -42,20 +42,12 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
   protected $seed;
 
   /**
-   * Name prefix.
-   *
-   * @var string
-   */
-  protected $namePrefix;
-
-  /**
    * {@inheritdoc}
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data, EncryptionProfileManagerInterface $encryption_profile_manager, EncryptServiceInterface $encrypt_service) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data, $encryption_profile_manager, $encrypt_service);
     // Generate seed.
     $this->setSeed($this->createSeed());
-    $this->namePrefix = \Drupal::config('tfa.settings')->get('name_prefix');
   }
 
   /**
@@ -64,6 +56,7 @@ class GALoginTotpSetup extends TfaTotp implements TfaSetupInterface {
   public function getSetupForm(array $form, FormStateInterface $form_state) {
     $help_links = $this->getHelpLinks();
 
+    $items = [];
     foreach ($help_links as $item => $link) {
       $items[] = Link::fromTextAndUrl($item, Url::fromUri($link, ['attributes' => ['target' => '_blank']]));
     }
