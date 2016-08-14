@@ -24,14 +24,6 @@ use Drupal\user\UserDataInterface;
  * )
  */
 class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterface {
-
-  /**
-   * The number of recovery codes to generate.
-   *
-   * @var int
-   */
-  protected $codeLimit;
-
   /**
    * The generated recovery codes.
    *
@@ -44,7 +36,6 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data, EncryptionProfileManagerInterface $encryption_profile_manager, EncryptServiceInterface $encrypt_service) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data, $encryption_profile_manager, $encrypt_service);
-    $this->codeLimit = \Drupal::config('tfa.settings')->get('recovery_codes_amount');
   }
 
   /**
@@ -52,7 +43,7 @@ class GALoginRecoveryCodeSetup extends TfaRecoveryCode implements TfaSetupInterf
    */
   public function getSetupForm(array $form, FormStateInterface $form_state, $reset = 0) {
 
-    if ($codes = $this->getCodes() && !$reset) {
+    if (!$reset && $codes = $this->getCodes()) {
       $this->codes = $codes;
     }
     else {
