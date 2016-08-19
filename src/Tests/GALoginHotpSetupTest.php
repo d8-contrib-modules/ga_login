@@ -4,6 +4,7 @@ namespace Drupal\ga_login\Tests;
 
 use Base32\Base32;
 use Drupal\simpletest\WebTestBase;
+use Drupal\tfa\Tests\TFATestBase;
 use Otp\GoogleAuthenticator;
 use Otp\Otp;
 
@@ -12,15 +13,7 @@ use Otp\Otp;
  *
  * @group GA_Login
  */
-class GALoginHotpSetupTest extends WebTestBase {
-
-  /**
-   * Object containing the external validation library.
-   *
-   * @var GoogleAuthenticator
-   */
-  protected $auth;
-
+class GALoginHotpSetupTest extends TFATestBase {
   /**
    * The validation plugin manager to fetch plugin information.
    *
@@ -31,19 +24,10 @@ class GALoginHotpSetupTest extends WebTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['tfa', 'ga_login', 'encrypt', 'key'];
-
-  /**
-   * {@inheritdoc}
-   */
   public function setUp() {
     // Enable TFA module and the test module.
     parent::setUp();
 
-    // OTP class to do GA Login validation.
-    $this->auth      = new \StdClass();
-    $this->auth->otp = new Otp();
-    $this->auth->ga  = new GoogleAuthenticator();
     $this->tfaSetupManager = \Drupal::service('plugin.manager.tfa.setup');
   }
 
@@ -51,14 +35,15 @@ class GALoginHotpSetupTest extends WebTestBase {
    * Test setup of TOTP.
    */
   public function testHotpSetup() {
-    $account = $this->drupalCreateUser(['setup own tfa']);
+    $account = $this->drupalCreateUser(['setup own tfa', 'disable own tfa']);
     $this->drupalLogin($account);
 
     $plugin = 'tfa_hotp';
     $this->config('tfa.settings')
          ->set('enabled', 1)
-         ->set('validate_plugin', $plugin)
-         ->save();
+         ->set('validation_plugin', $plugin)
+         ->set('encryption', 'test_encryption_profile')
+      ->save();
     $setup_plugin = $this->tfaSetupManager->createInstance($plugin . '_setup', ['uid' => $account->id()]);
     $this->drupalGet('user/' . $account->id() . '/security/tfa');
     $this->assertText($this->uiStrings('setup-app'));
@@ -95,6 +80,7 @@ class GALoginHotpSetupTest extends WebTestBase {
       'code' => $this->auth->otp->hotp(Base32::decode($seed), 1),
     ];
     $this->drupalPostForm(NULL, $edit, t('Verify and save'));
+
     // Disable TFA.
     $this->assertText($this->uiStrings('tfa-disable'));
   }
@@ -103,27 +89,27 @@ class GALoginHotpSetupTest extends WebTestBase {
    * Test setup of HOTP with fallbacks.
    */
   public function testTotpSetupWithFallback() {
-    $account = $this->drupalCreateUser(['setup own tfa']);
+    $account = $this->drupalCreateUser(['setup own tfa', 'disable own tfa']);
     $this->drupalLogin($account);
 
     $plugin = 'tfa_hotp';
     $fallback_plugin = 'tfa_recovery_code';
     $fallback_plugin_config = [
-      $plugin => [$fallback_plugin => ['enable' => 1, 'weight' => -2]],
+      $plugin => [$fallback_plugin => ['enable' => 1, 'settings'=> ['recovery_codes_amount' => 1], 'weight' => -2]],
     ];
+
     $this->config('tfa.settings')
-         ->set('enabled', 1)
-         ->set('validate_plugin', $plugin)
-         ->set('fallback_plugins', $fallback_plugin_config)
-         ->save();
+      ->set('enabled', 1)
+      ->set('validation_plugin', $plugin)
+      ->set('fallback_plugins', $fallback_plugin_config)
+      ->set('encryption', 'test_encryption_profile')
+      ->save();
 
     // OTP Plugin Setup.
     $setup_plugin = $this->tfaSetupManager->createInstance($plugin . '_setup', ['uid' => $account->id()]);
     $this->drupalGet('user/' . $account->id() . '/security/tfa');
     // Setup otp link.
     $this->assertText($this->uiStrings('setup-app'));
-    // Check that fallback method is not shown.
-    $this->assertText($this->uiStrings('otp-disabled-fallback'));
 
     $this->drupalGet('user/' . $account->id() . '/security/tfa/' . $plugin);
     $this->assertText($this->uiStrings('password-request'));
@@ -157,7 +143,12 @@ class GALoginHotpSetupTest extends WebTestBase {
       'code' => $this->auth->otp->hotp(Base32::decode($seed), 1),
     ];
 
+    // Post HOTP form.
     $this->drupalPostForm(NULL, $edit, t('Verify and save'));
+
+    // Post recovery codes form.
+    $this->drupalPostForm(NULL, NULL, t('Save'));
+
     // Disable TFA link.
     $this->assertText($this->uiStrings('tfa-disable'));
     // Fallback method now accessible.
