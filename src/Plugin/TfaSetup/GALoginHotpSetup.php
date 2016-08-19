@@ -41,20 +41,12 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   protected $seed;
 
   /**
-   * Name prefix.
-   *
-   * @var string
-   */
-  protected $namePrefix;
-
-  /**
    * {@inheritdoc}
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition, UserDataInterface $user_data, EncryptionProfileManagerInterface $encryption_profile_manager, EncryptServiceInterface $encrypt_service) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $user_data, $encryption_profile_manager, $encrypt_service);
     // Generate seed.
     $this->setSeed($this->createSeed());
-    $this->namePrefix = \Drupal::config('tfa.settings')->get('name_prefix');
   }
 
   /**
@@ -121,7 +113,6 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
   public function validateSetupForm(array $form, FormStateInterface $form_state) {
     if (!$this->validate($form_state->getValue('code'))) {
       $this->errorMessages['code'] = t('Invalid application code. Please try again.');
-      // $form_state->setErrorByName('code', $this->errorMessages['code']);.
       return FALSE;
     }
     $this->storeAcceptedCode($form_state->getValue('code'));
@@ -135,7 +126,7 @@ class GALoginHotpSetup extends TfaHotp implements TfaSetupInterface {
     // The counter is set as 1 because that is the initial value.
     // This ensures that things work even if we reset the application.
     $code = preg_replace('/\s+/', '', $code);
-    $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), 1, $code);
+    $counter = $this->auth->otp->checkHotpResync(Base32::decode($this->seed), 1, $code, $this->counterWindow);
     $this->setUserData('tfa', ['tfa_hotp_counter' => ++$counter], $this->uid, $this->userData);
     return ((bool) $counter);
   }
