@@ -71,7 +71,7 @@ before_script:
   - cp -r encrypt/tests/modules/encrypt_test $DRUPAL_ROOT/modules
 
   # Manually clone the dependencies
-  - git clone --depth 1 --branch 8.x-1.x http://git.drupal.org/project/composer_manager.git $DRUPAL_ROOT/modules
+  - git clone --depth 1 --branch 8.x-1.x http://git.drupal.org/project/composer_manager.git
 
   # We need to run simpletest so install drupal and enable simpletest.
   - drush -y --root=$DRUPAL_ROOT site-install --db-url=$SIMPLETEST_DB
