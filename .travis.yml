@@ -62,12 +62,13 @@ before_script:
   - ln -s $TRAVIS_BUILD_DIR $DRUPAL_ROOT/modules/$DRUPAL_MODULE
 
   # Download the additional modules.
-  - git clone --depth 1 https://github.com/d8-contrib-modules/tfa.git $DRUPAL_ROOT/modules; fi
+  - cd $DRUPAL_ROOT/modules
+  - git clone --depth 1 https://github.com/d8-contrib-modules/tfa.git
   - git clone --branch 8.x-3.x https://git.drupal.org/project/encrypt.git
   - git clone --branch 8.x-1.x https://git.drupal.org/project/key.git
 
   # Bring the Encrypt Test module into existence which is a dependency of the TFA module.
-  - cp -r $DRUPAL_ROOT/modules/encrypt/tests/modules/encrypt_test $DRUPAL_ROOT/modules
+  - cp -r encrypt/tests/modules/encrypt_test $DRUPAL_ROOT/modules
 
   # Manually clone the dependencies
   - git clone --depth 1 --branch 8.x-1.x http://git.drupal.org/project/composer_manager.git $DRUPAL_ROOT/modules
